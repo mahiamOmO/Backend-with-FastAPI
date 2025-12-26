@@ -73,6 +73,8 @@ Campaigns
 -created_at
 
 """
+
+
 @app.get("/api/v1/campaigns")
 async def read_campaigns():
     return {"campaigns": data}
