@@ -2,10 +2,17 @@ from fastapi import Depends, FastAPI
 from typing import Any
 from fastapi import FastAPI, HTTPException, Request
 from random import randint
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, List, Dict, Annotated
 from sqlmodel import SQLModel, create_engine, Session, select, Field
 from contextlib import asynccontextmanager
+from sqlmodel import SQLModel,Session,create_engine
+
+class Campaign(SQLModel,table=True):
+    campaign_id: int | None = Field(default=None, primary_key=True)
+    name: str = Field(index=True)
+    due_date: datetime | None = Field(default=None,index=True)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc),nullable=True,index=True)
 
 sqlite_file_name = "databse.db"
 sqlite_url = f"sqlite:///{sqlite_file_name}"
@@ -17,7 +24,7 @@ def create_db_and_tables():
     SQLModel.metadata.create_all(engine)
 
 def get_session():
-    with Session(engine) as session:
+    with Session(engine) as session:  
         yield session
 
 SessionDep = Annotated[Session, Depends(get_session)]
@@ -25,6 +32,13 @@ SessionDep = Annotated[Session, Depends(get_session)]
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     create_db_and_tables()
+    with Session(engine) as session:
+        if not session.exec(select(Campaign)).first():
+            session.add_all([
+            Campaign(name="Summer Launch", due_date=datetime.now()),
+            Campaign(name="Winter Sale", due_date=datetime.now())
+            ])
+            session.commit()
     yield
 
 
