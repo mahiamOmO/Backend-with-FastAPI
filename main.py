@@ -1,9 +1,9 @@
 from datetime import datetime
 from fastapi import FastAPI
 from typing import Any
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from random import randint
-
+from datetime import datetime
 app = FastAPI(root_path="/api/v1")
 
 @app.get("/")
@@ -46,7 +46,7 @@ async def read_campaign(id: int):
         
     raise HTTPException(status_code=404, detail="Campaign not found")
 @app.post("/campaigns")
-async  def create_campaign(request: Request):
+async  def create_campaign(body: dict[str,Any]):
     body = await request.json()
 
     new: Any = {
@@ -58,3 +58,21 @@ async  def create_campaign(request: Request):
 
     data.append(new)
     return {"campaign": new}
+
+@app.put("/campaigns/{id}")
+async def update_campaign(id: int, body: dict[str, Any]):
+
+    for index,campaign in enumerate(data):
+        if campaign.get("campaign_id") == id:
+
+           updated : Any = {
+               "campaign_id": id,
+               "name": body.get("name"),
+               "due_date": body.get("due_date"),
+               "created_at": campaign.get("created_at")
+          
+           }
+        data[index] = updated
+        return {"campaign": updated}
+
+    raise HTTPException(status_code=404, detail="Campaign not found")
